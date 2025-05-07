@@ -1,0 +1,3 @@
+enum Side {
+    ASK, BID
+};
