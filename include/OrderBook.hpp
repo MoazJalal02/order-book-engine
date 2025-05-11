@@ -28,16 +28,17 @@ struct hash_pair {
 
 class OrderBook {
     private:
-        priority_queue<Order, vector<Order>, comparePrice> bistAsk; //min-heap
-        priority_queue<Order, vector<Order>> bistBid; //max-heap
+        priority_queue<Order, vector<Order>, comparePrice> bestAsk; //min-heap
+        priority_queue<Order, vector<Order>> bestBid; //max-heap
         unordered_map<int, Order> orders;
         unordered_map<pair<double, Side>, int, hash_pair> volumesAtPrice;
     public:
         OrderBook();
-        void placeOrder();
-        void executeOrder(Order &);
-        // void cancelOrder(Order);
+        void placeOrder(Order&);
+        void executeOrder(Order&);
+        void cancelOrder(Order&);
         int getVolumeAtPrice(pair<double, Side>);
+        void displayOrders();
 };
 
 

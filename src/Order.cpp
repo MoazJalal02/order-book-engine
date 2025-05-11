@@ -53,8 +53,9 @@ void Order::setTimeStamp(time_t t) {
 }
 
 void Order::displayOrder() const {
+    string type = orderType == 0? "ASK": "BID";
     cout << "Order Id: " << orderId << endl;
-    cout << "Order Type: " << orderType << endl;
+    cout << "Order Type: " << type << endl;
     cout << "Price: " << price << endl;
     cout << "Initital Volume: " << initialVolume << endl;
     cout << "Remaining Volume: " << remainingVolume << endl;
