@@ -19,7 +19,6 @@ private:
     bool greater(int i, int j);
 
 public:
-    bool contains(int orderID) const;
     void insert(int orderID, double price);
     void remove(int orderID);
     int top() const;
