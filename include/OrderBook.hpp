@@ -17,7 +17,7 @@ class OrderBook {
         OrderBook();
         void placeOrder(int userId, OrderType orderType, OrderSide orderSide, double price, double initialAmount);
         void cancelOrder(int userId, int orderId);
-        void fullfillOrder(int orderId);
+        void fullfillOrder(Order& order);
         int matchOrder(int orderId);
         void displayOrderBook();
 };
