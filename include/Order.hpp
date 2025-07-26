@@ -22,7 +22,9 @@ class Order {
 
         void setRemainingAmount(double amount);
         int getOrderId() const;
+        int getUserId() const;
         double getPrice() const;
+        OrderSide getOrderSide() const;
 };
 
 #endif
