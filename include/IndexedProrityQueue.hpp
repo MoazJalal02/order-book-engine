@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include "Order.hpp"
 
 using namespace std;
 
@@ -19,12 +20,14 @@ private:
     bool greater(int i, int j);
 
 public:
-    bool contains(int orderID) const;
-    void insert(int orderID, double price);
+    void insert(Order order);
     void remove(int orderID);
     int top() const;
     void pop();
     bool empty() const;
+    bool contains(int orderID) const {
+        return position.find(orderID) != position.end();
+    }
 };
 
 #endif
