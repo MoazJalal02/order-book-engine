@@ -5,7 +5,7 @@
 
 class Order {
     private:
-        static int orderId;
+        int orderId;
         int userId;
         OrderType orderType;
         OrderSide orderSide;
@@ -13,9 +13,9 @@ class Order {
         double initialAmount;
         double remainingAmount;
     public:
-        Order(int userId, OrderType orderType, OrderSide orderSide, double price, double initialAmount)
-            : userId(userId), orderType(orderType), orderSide(orderSide), initialAmount(initialAmount), remainingAmount(initialAmount) {
-            orderId++;
+        Order(int orderId, int userId, OrderType orderType, OrderSide orderSide, double price, double initialAmount)
+            : orderId(orderId), userId(userId), orderType(orderType), orderSide(orderSide), price(price), initialAmount(initialAmount), remainingAmount(initialAmount) {
+            ;
         }
 
         double getRemainingAmount() const;
@@ -24,6 +24,8 @@ class Order {
         int getOrderId() const;
         int getUserId() const;
         double getPrice() const;
+        double getInitialAmount() const;
+        OrderType getOrderType() const;
         OrderSide getOrderSide() const;
 };
 

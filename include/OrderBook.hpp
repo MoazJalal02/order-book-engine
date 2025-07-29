@@ -9,15 +9,19 @@ using namespace std;
 
 class OrderBook {
     private:
+        int nextOrderID = 1;
         unordered_map<OrderSide, unordered_map<double, double>> volumeAtPriceMap;
         unordered_map<int, Order> orders;
         IndexedPriorityQueue buyOrders;
         IndexedPriorityQueue sellOrders;
+
+        void printOrderSide(OrderSide side) const;
     public:
         OrderBook();
-        void placeOrder(int userId, OrderType orderType, OrderSide orderSide, double price, double initialAmount);
+        void placeOrder(int userId, OrderType orderType, OrderSide orderSide, double initialAmount, double price = 0.0);
         void cancelOrder(int userId, int orderId);
         void fulfillOrder(Order& order);
-        void displayOrderBook();
+        void listUserOrders(int userId) const;
+        void displayOrderBook() const;
 };
 #endif
