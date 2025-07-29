@@ -25,9 +25,7 @@ public:
     int top() const;
     void pop();
     bool empty() const;
-    bool contains(int orderID) const {
-        return position.find(orderID) != position.end();
-    }
+    bool contains(int orderID) const;
 };
 
 #endif
