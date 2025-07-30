@@ -69,19 +69,43 @@ void OrderBook::placeOrder(int userId, OrderType orderType, OrderSide orderSide,
     
 }
 
-void OrderBook::cancelOrder(int userId, int orderId) {
-    // Check if the order exists
-    if(orders.find(orderId) == orders.end()) {
-        return;
+
+bool OrderBook::hasOrder(int orderId) const {
+    return orders.find(orderId) != orders.end();
+}
+
+double OrderBook::getVolumeAtPrice(OrderSide side, double price) const {
+    auto it = volumeAtPriceMap.find(side);
+    if(it != volumeAtPriceMap.end()) {
+        auto priceIt = it->second.find(price);
+        if(priceIt != it->second.end()) {
+            return priceIt->second;
+        }
     }
 
-    // Check if the user is the owner of the order
-    Order* order = &orders.at(orderId);
-    if(userId != order->getUserId()) {
-        return;
+    return 0.0;
+}
+
+int OrderBook::getOrdersCount(OrderSide side) const {
+    int count = 0;
+    for (const auto& [id, order] : orders) {
+        if (order.getOrderSide() == side) {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+bool OrderBook::cancelOrder(int userId, int orderId) {
+    // Check if the order exists
+    auto it = orders.find(orderId);
+    if(it == orders.end() || it->second.getUserId() != userId) {
+
+        return false;
     }
     
-    OrderSide orderSide = order->getOrderSide();
+    OrderSide orderSide = it->second.getOrderSide();
     // Remove the order from the appropriate priority queue
     if(orderSide == OrderSide::Buy && buyOrders.contains(orderId)) {
         buyOrders.remove(orderId);
@@ -91,10 +115,10 @@ void OrderBook::cancelOrder(int userId, int orderId) {
 
     // Update the volume at price map
     auto& volumeMap = volumeAtPriceMap[orderSide];
-    auto price = order->getPrice();
+    auto price = it->second.getPrice();
 
     if (volumeMap.count(price)) {
-        volumeMap[price] -= order->getRemainingAmount();
+        volumeMap[price] -= it->second.getRemainingAmount();
         if (volumeMap[price] <= 0.0) {
             volumeMap.erase(price);
         }
@@ -102,6 +126,8 @@ void OrderBook::cancelOrder(int userId, int orderId) {
 
     // Remove the order from the orders map
     orders.erase(orderId);
+
+    return true;
 
 }
 

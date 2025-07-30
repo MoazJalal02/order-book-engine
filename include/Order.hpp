@@ -13,7 +13,7 @@ class Order {
         double initialAmount;
         double remainingAmount;
     public:
-        Order(int orderId, int userId, OrderType orderType, OrderSide orderSide, double price, double initialAmount)
+        Order(int orderId, int userId, OrderType orderType, OrderSide orderSide, double initialAmount, double price= 0.0)
             : orderId(orderId), userId(userId), orderType(orderType), orderSide(orderSide), price(price), initialAmount(initialAmount), remainingAmount(initialAmount) {
             ;
         }
