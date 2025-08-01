@@ -43,3 +43,7 @@
 #running configureation 
 *.vscode
 *.json
+
+ipq_tests
+order_tests
+orderbook_tests
