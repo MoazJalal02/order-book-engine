@@ -6,14 +6,41 @@
 
 using namespace std;
 
-OrderBook::OrderBook(){
-    
-};
+OrderBook::OrderBook(): buyOrders(false), sellOrders(true) {
+
+}
+
+OrderBook::OrderBook(vector<Order> initialOrders): buyOrders(false), sellOrders(true) {
+    for (const auto& order : initialOrders) {
+        insertSingleOrder(order);
+    }
+}
+
+void OrderBook::insertSingleOrder(const Order& order) {
+    orders.emplace(order.getOrderId(), order);
+
+    if(order.getOrderSide() == OrderSide::Buy) {
+        buyOrders.insert(order);
+    } else {
+        sellOrders.insert(order);
+    }
+
+    volumeAtPriceMap[order.getOrderSide()][order.getPrice()] += order.getRemainingAmount();
+}
 
 void OrderBook::placeOrder(int userId, OrderType orderType, OrderSide orderSide, double initialAmount, double price) {
+    // Validate order parameters
+    if(initialAmount <= 0) {
+        throw invalid_argument("Invalid order inputs: initial amount must be greater than zero.");
+    }
+
+    if(orderType== OrderType::Limit && price <= 0.00) {
+        throw invalid_argument("Invalid order inputs: price must be greater than zero for limit orders."); 
+    } 
+
     // Create a new order
     int orderId = nextOrderID++;
-    Order newOrder(orderId, userId, orderType, orderSide, price, initialAmount);
+    Order newOrder(orderId, userId, orderType, orderSide, initialAmount, price);
 
     double remainingAmount = initialAmount;
 
@@ -21,15 +48,15 @@ void OrderBook::placeOrder(int userId, OrderType orderType, OrderSide orderSide,
         fulfillOrder(newOrder);
 
         remainingAmount = newOrder.getRemainingAmount();
-        cout << "Order PLaced:\n";
-        cout << "  → Order ID: " << orderId << "\n";
-        cout << "  → Status: Fully matched\n";
+        // cout << "Order PLaced:\n";
+        // cout << "  → Order ID: " << orderId << "\n";
+        // cout << "  → Status: Fully matched\n";
         
         if(remainingAmount > 0) {
-            cout << "Order PLaced:\n";
-            cout << "  → Order ID: " << orderId << "\n";
-            cout << "  → order could not be fully fulfilled. Remaining amount: " 
-            << remainingAmount << ". Consider placing a limit order instead." << endl;
+            // cout << "Order PLaced:\n";
+            // cout << "  → Order ID: " << orderId << "\n";
+            // cout << "  → order could not be fully fulfilled. Remaining amount: " 
+            // << remainingAmount << ". Consider placing a limit order instead." << endl;
             return;
         } 
     }
@@ -40,33 +67,29 @@ void OrderBook::placeOrder(int userId, OrderType orderType, OrderSide orderSide,
     remainingAmount = newOrder.getRemainingAmount();
 
     if(remainingAmount <= 0) {
-        cout << "Order Placed:\n";
-        cout << "  → Order ID: " << orderId << "\n";
-        cout << "  → Status: Fulfilled\n";
-        cout << "  → Fulfilled Quantity: " << initialAmount << "/" << initialAmount << "\n";
+        // cout << "Order Placed:\n";
+        // cout << "  → Order ID: " << orderId << "\n";
+        // cout << "  → Status: Fulfilled\n";
+        // cout << "  → Fulfilled Quantity: " << initialAmount << "/" << initialAmount << "\n";
         return; 
     }
     
     
-    // Add the order to the orders map
     orders.emplace(newOrder.getOrderId(), std::move(newOrder));
 
-    // Insert the order into the appropriate priority queue based on order side
     if(orderSide == OrderSide::Buy) {
             buyOrders.insert(newOrder);
     } else {
             sellOrders.insert(newOrder);
     }
 
-    cout << "Order Placed:\n";
-    cout << "  → Order ID: " << orderId << "\n";
-    cout << "  → Status: " 
-            << (remainingAmount < initialAmount ? "Partially filled" : "Pending") << "\n";
-    cout << "  → Fulfilled Quantity: " << initialAmount - remainingAmount << "/" << initialAmount << "\n";
+    // cout << "Order Placed:\n";
+    // cout << "  → Order ID: " << orderId << "\n";
+    // cout << "  → Status: " 
+    //         << (remainingAmount < initialAmount ? "Partially filled" : "Pending") << "\n";
+    // cout << "  → Fulfilled Quantity: " << initialAmount - remainingAmount << "/" << initialAmount << "\n";
 
-    //  Update the volume at price map
     volumeAtPriceMap[orderSide][price] += remainingAmount;
-    
 }
 
 
@@ -100,20 +123,24 @@ int OrderBook::getOrdersCount(OrderSide side) const {
 bool OrderBook::cancelOrder(int userId, int orderId) {
     // Check if the order exists
     auto it = orders.find(orderId);
-    if(it == orders.end() || it->second.getUserId() != userId) {
-
+    if(it == orders.end()) {
+        throw invalid_argument("Order does not exist");
+        return false;    
+    }
+    
+    if(it->second.getUserId() != userId) {
+        throw invalid_argument("User does not own the order");
         return false;
     }
     
     OrderSide orderSide = it->second.getOrderSide();
-    // Remove the order from the appropriate priority queue
+
     if(orderSide == OrderSide::Buy && buyOrders.contains(orderId)) {
         buyOrders.remove(orderId);
     } else if (orderSide == OrderSide::Sell && sellOrders.contains(orderId)) {
         sellOrders.remove(orderId);
     }
 
-    // Update the volume at price map
     auto& volumeMap = volumeAtPriceMap[orderSide];
     auto price = it->second.getPrice();
 
@@ -124,21 +151,17 @@ bool OrderBook::cancelOrder(int userId, int orderId) {
         }
     }
 
-    // Remove the order from the orders map
     orders.erase(orderId);
 
     return true;
-
 }
 
 void OrderBook::fulfillOrder(Order& order) {
-    // Match the order with the best available opposite order
     while(order.getRemainingAmount() > 0) {
         int matchedOrderId = -1;
         Order* matchedOrder = nullptr;
 
-
-        // Select the best match based on order side
+        // Select the best match
         if(order.getOrderSide() == OrderSide::Buy && !sellOrders.empty()) {
             matchedOrderId = sellOrders.top();
             matchedOrder = &orders.at(matchedOrderId);
@@ -173,7 +196,6 @@ void OrderBook::fulfillOrder(Order& order) {
 
             orders.erase(matchedOrderId);
         }
-
     }
 }
 
