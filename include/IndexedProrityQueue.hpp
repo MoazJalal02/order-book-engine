@@ -17,9 +17,10 @@ private:
     void swap(int i, int j);
     void upHeap(int k);
     void downHeap(int k);
-    bool greater(int i, int j);
+    bool hasHigherPriority(int i, int j);
 
 public:
+    IndexedPriorityQueue(bool minHeap = true) : isMinHeap(minHeap) {}
     void insert(Order order);
     void remove(int orderID);
     int top() const;
