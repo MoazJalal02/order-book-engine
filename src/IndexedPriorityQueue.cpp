@@ -9,7 +9,7 @@ void IndexedPriorityQueue::swap(int i, int j) {
 }
 
 void IndexedPriorityQueue::upHeap(int k) {
-    while (k > 0 && greater(heap[k], heap[(k - 1) / 2])) {
+    while (k > 0 && hasHigherPriority(k, (k - 1) / 2)) {
         swap(k, (k - 1) / 2);
         k = (k - 1) / 2;
     }
@@ -19,10 +19,10 @@ void IndexedPriorityQueue::downHeap(int k) {
     int n = heap.size();
     while (2 * k + 1 < n) {
         int j = 2 * k + 1;
-        if (j + 1 < n && greater(heap[j + 1], heap[j])) {
+        if (j + 1 < n && hasHigherPriority(j + 1, j)) {
             j++;
         }
-        if (!greater(heap[k], heap[j])) {
+        if (!hasHigherPriority(j, k)) {
             break;
         }
         swap(k, j);
@@ -30,7 +30,7 @@ void IndexedPriorityQueue::downHeap(int k) {
     }
 }
 
-bool IndexedPriorityQueue::greater(int i, int j) {
+bool IndexedPriorityQueue::hasHigherPriority(int i, int j) {
     if (isMinHeap) {
         return priority[heap[i]] < priority[heap[j]];
     } else {
@@ -49,14 +49,16 @@ void IndexedPriorityQueue::insert(Order order) {
 
 void IndexedPriorityQueue::remove(int orderID) {
     auto it = position.find(orderID);
+    if(it == position.end()) return;
+
     int idx = it->second;
     swap(idx, heap.size() - 1);
     heap.pop_back();
     position.erase(it);
     priority.erase(orderID);
     if (idx < heap.size()) {
-        downHeap(idx);
         upHeap(idx);
+        downHeap(idx);
     }
 }
 

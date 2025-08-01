@@ -16,10 +16,15 @@ class OrderBook {
         IndexedPriorityQueue sellOrders;
 
         void printOrderSide(OrderSide side) const;
+        void insertSingleOrder(const Order& order);
     public:
         OrderBook();
+        OrderBook(vector<Order> initialOrders);
         void placeOrder(int userId, OrderType orderType, OrderSide orderSide, double initialAmount, double price = 0.0);
-        void cancelOrder(int userId, int orderId);
+        bool hasOrder(int orderId) const;
+        double getVolumeAtPrice(OrderSide side, double price) const;
+        int getOrdersCount(OrderSide side) const;
+        bool cancelOrder(int userId, int orderId);
         void fulfillOrder(Order& order);
         void listUserOrders(int userId) const;
         void displayOrderBook() const;
