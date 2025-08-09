@@ -48,15 +48,8 @@ void OrderBook::placeOrder(int userId, OrderType orderType, OrderSide orderSide,
         fulfillOrder(newOrder);
 
         remainingAmount = newOrder.getRemainingAmount();
-        // cout << "Order PLaced:\n";
-        // cout << "  → Order ID: " << orderId << "\n";
-        // cout << "  → Status: Fully matched\n";
         
         if(remainingAmount > 0) {
-            // cout << "Order PLaced:\n";
-            // cout << "  → Order ID: " << orderId << "\n";
-            // cout << "  → order could not be fully fulfilled. Remaining amount: " 
-            // << remainingAmount << ". Consider placing a limit order instead." << endl;
             return;
         } 
     }
@@ -67,10 +60,6 @@ void OrderBook::placeOrder(int userId, OrderType orderType, OrderSide orderSide,
     remainingAmount = newOrder.getRemainingAmount();
 
     if(remainingAmount <= 0) {
-        // cout << "Order Placed:\n";
-        // cout << "  → Order ID: " << orderId << "\n";
-        // cout << "  → Status: Fulfilled\n";
-        // cout << "  → Fulfilled Quantity: " << initialAmount << "/" << initialAmount << "\n";
         return; 
     }
     
@@ -82,12 +71,6 @@ void OrderBook::placeOrder(int userId, OrderType orderType, OrderSide orderSide,
     } else {
             sellOrders.insert(newOrder);
     }
-
-    // cout << "Order Placed:\n";
-    // cout << "  → Order ID: " << orderId << "\n";
-    // cout << "  → Status: " 
-    //         << (remainingAmount < initialAmount ? "Partially filled" : "Pending") << "\n";
-    // cout << "  → Fulfilled Quantity: " << initialAmount - remainingAmount << "/" << initialAmount << "\n";
 
     volumeAtPriceMap[orderSide][price] += remainingAmount;
 }
@@ -121,7 +104,6 @@ int OrderBook::getOrdersCount(OrderSide side) const {
 }
 
 bool OrderBook::cancelOrder(int userId, int orderId) {
-    // Check if the order exists
     auto it = orders.find(orderId);
     if(it == orders.end()) {
         throw invalid_argument("Order does not exist");
@@ -157,6 +139,9 @@ bool OrderBook::cancelOrder(int userId, int orderId) {
 }
 
 void OrderBook::fulfillOrder(Order& order) {
+    const string yellow = "\033[33m";
+    const string reset = "\033[0m";
+    double averagePrice = 0.0;
     while(order.getRemainingAmount() > 0) {
         int matchedOrderId = -1;
         Order* matchedOrder = nullptr;
@@ -180,23 +165,31 @@ void OrderBook::fulfillOrder(Order& order) {
         double matchedAmount = min(order.getRemainingAmount(), matchedOrder->getRemainingAmount());
         order.setRemainingAmount(order.getRemainingAmount() - matchedAmount);
         matchedOrder->setRemainingAmount(matchedOrder->getRemainingAmount() - matchedAmount);
-
+        averagePrice += matchedAmount * matchedOrder->getPrice();
+        
+        cout << yellow <<"Filled " << matchedAmount
+             << "/" << order.getInitialAmount() << " units at price: $" << matchedOrder->getPrice() << reset << endl;
+             
         // Update volume at price
         OrderSide matchedSide = matchedOrder->getOrderSide();
         volumeAtPriceMap[matchedSide][matchedOrder->getPrice()] -= matchedAmount;
         if(volumeAtPriceMap[matchedSide][matchedOrder->getPrice()] <= 0)
-            volumeAtPriceMap[matchedSide].erase(matchedOrder->getPrice());
-            
+        volumeAtPriceMap[matchedSide].erase(matchedOrder->getPrice());
+             
+        
         // Remove fully matched orders
         if(matchedOrder->getRemainingAmount() <= 0) {
             if(matchedSide == OrderSide::Sell)
-                sellOrders.remove(matchedOrderId);
+            sellOrders.remove(matchedOrderId);
             else
-                buyOrders.remove(matchedOrderId);
-
+            buyOrders.remove(matchedOrderId);
+            
             orders.erase(matchedOrderId);
-        }
+        }        
     }
+    averagePrice /= order.getInitialAmount() - order.getRemainingAmount();
+    cout << yellow <<"Filled " << order.getInitialAmount() - order.getRemainingAmount()
+         << "/" << order.getInitialAmount() << " units at average price: $" << averagePrice << reset << endl;
 }
 
 void OrderBook::listUserOrders(int userId) const {
@@ -214,50 +207,82 @@ void OrderBook::listUserOrders(int userId) const {
     }
 }
 
-void OrderBook::printOrderSide(OrderSide side) const {
-    // ANSI Color codes
-    const char* color = (side == OrderSide::Buy) ? "\033[32m" : "\033[31m";
-    const char* reset = "\033[0m";
+void OrderBook::printOrderBook(int count) const {
+    const string green = "\033[32m";
+    const string red = "\033[31m";
+    const string reset = "\033[0m";
 
-    auto& priceVolumeMap = volumeAtPriceMap.at(side);
+    vector<double> buyPrices, sellPrices;
 
-    vector<pair<double, double>> sortedPriceVolume(priceVolumeMap.begin(), priceVolumeMap.end());
-
-    if (side == OrderSide::Buy) {
-        sort(sortedPriceVolume.begin(), sortedPriceVolume.end(),
-            [](const auto& a, const auto& b) { return a.first > b.first; });
-    } else {
-        sort(sortedPriceVolume.begin(), sortedPriceVolume.end(),
-            [](const auto& a, const auto& b) { return a.first < b.first; });
+    for(const auto& [price, volume] : volumeAtPriceMap.at(OrderSide::Buy)) {
+        buyPrices.push_back(price);
     }
 
-    cout << (side == OrderSide::Buy ? "BUY ORDERS:\n" : "SELL ORDERS:\n");
-    cout << setw(10) << "Price" << " "
-         << setw(10) << "Volume\n";
-
-    for (const auto& [price, volume] : sortedPriceVolume) {
-        cout << color
-             << fixed << setprecision(2)
-             << setw(10) << price << "  "
-             << setw(10) << volume << "\n"
-             << reset << endl;
+    for(const auto& [price, volume] : volumeAtPriceMap.at(OrderSide::Sell)) {
+        sellPrices.push_back(price);
     }
-}
 
+    sort(buyPrices.begin(), buyPrices.end(), greater<double>());
+    sort(sellPrices.begin(), sellPrices.end());
+    
+    int maxCount = max((int)sellPrices.size(), (int)buyPrices.size());
 
-void OrderBook::displayOrderBook() const {
-    // Display buy orders
-    cout << "ORDER BOOK:\n";
-    
-    cout << "-------------------\n";
-    cout << "BUY ORDERS:\n";
-    printOrderSide(OrderSide::Buy);
-    
-    cout << "-------------------\n";
-    cout << "SELL ORDERS:\n";
-    printOrderSide(OrderSide::Sell);
-    
-    cout << "-------------------\n";
-    cout << "Total Orders: " << orders.size() << "\n";
-    cout << "-------------------\n";
+    const int cellWidth = 12;
+    const int colGap = 8;
+    const int totalWidth = 4 * cellWidth + colGap;
+
+    cout << "\n";
+    cout << string((totalWidth - 17)/2, ' ') << "=== ORDER BOOK: AAPL ===" << endl;
+    cout << endl;
+
+    cout 
+        << left
+        << setw(cellWidth) << "SELL Price" << setw(cellWidth) << "Volume"
+        << string(colGap, ' ')
+        << setw(cellWidth) << "BUY Price" << setw(cellWidth) << "Volume"
+        << endl
+    ;
+
+    cout << string(totalWidth, '-') << endl;
+
+    for(int i = 0; i < maxCount; ++i) {
+        string sellPriceStr = "", sellVolStr = "";
+        string buyPriceStr  = "", buyVolStr  = "";
+
+        if(i < (int)sellPrices.size()) {
+            double price = sellPrices[i];
+            double vol   = volumeAtPriceMap.at(OrderSide::Sell).at(price);
+            
+            ostringstream ss;
+            ss << fixed << setprecision(3) << price;
+            sellPriceStr = ss.str();
+
+            ss.str("");
+            ss << fixed << setprecision(3) << vol;
+            sellVolStr   = ss.str();
+        }
+
+        if(i < (int)buyPrices.size()) {
+            double price = buyPrices[i];
+            double vol   = volumeAtPriceMap.at(OrderSide::Buy).at(price);
+            
+            ostringstream ss;
+            ss << fixed << setprecision(3) << price;
+            buyPriceStr = ss.str();
+            
+            ss.str("");
+            ss << fixed << setprecision(3) << vol;
+            buyVolStr   = ss.str();
+        }
+
+        cout
+            << red << left << setw(cellWidth) << sellPriceStr << reset
+            << red << setw(cellWidth) << sellVolStr << reset
+            << setw(colGap) << " "
+            << green << setw(cellWidth) << buyPriceStr  << reset
+            << green << setw(cellWidth) << buyVolStr << reset
+            << endl
+        ;
+    }
+    cout << string(totalWidth, '-') << endl;
 }

@@ -15,7 +15,6 @@ class OrderBook {
         IndexedPriorityQueue buyOrders;
         IndexedPriorityQueue sellOrders;
 
-        void printOrderSide(OrderSide side) const;
         void insertSingleOrder(const Order& order);
     public:
         OrderBook();
@@ -27,6 +26,6 @@ class OrderBook {
         bool cancelOrder(int userId, int orderId);
         void fulfillOrder(Order& order);
         void listUserOrders(int userId) const;
-        void displayOrderBook() const;
+        void printOrderBook(int count = 10) const;
 };
 #endif
