@@ -60,6 +60,7 @@ int main() {
                         cout << "Invalid input! Please enter a valid number or 'c' to cancel.\n";
                     }
                 }
+
                 if(cancelled) break;
 
                 while(true) {
@@ -87,13 +88,15 @@ int main() {
                         orderBook.placeOrder(100, OrderType::Limit, OrderSide::Buy, volume, price);
                     } catch (const exception& e) {
                         cout << "Error: " << e.what() << endl;
-                        }
+                    }
+                    
                     break;
                 }
                 
             case 2: {
                 double price, volume;
                 bool cancelled = false;
+
                 while(true) {
                     cout << "Enter price: $";
                     string input;
@@ -112,7 +115,9 @@ int main() {
                         cout << "Invalid input! Please enter a valid number or 'c' to cancel.\n";
                     }
                 }
+
                 if(cancelled) break;
+                
                 while(true) {
                     cout << "Enter volume: ";
                     string input;
@@ -131,12 +136,16 @@ int main() {
                         cout << "Invalid input! Please enter a valid number or 'c' to cancel.\n";
                     }
                 }
+
                 if(cancelled) break;
+
                 try {
                     orderBook.placeOrder(101, OrderType::Limit, OrderSide::Sell, volume, price);
                 } catch (const exception& e) {
                     cout << "Error: " << e.what() << endl;
                 }
+                
+                break;
             }
             
             case 3: {
@@ -170,6 +179,7 @@ int main() {
                 } catch (const exception& e) {
                     cout << "Error: " << e.what() << endl;
                 }
+                
                 break;
             }
             

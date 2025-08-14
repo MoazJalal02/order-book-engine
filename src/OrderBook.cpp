@@ -187,9 +187,13 @@ void OrderBook::fulfillOrder(Order& order) {
             orders.erase(matchedOrderId);
         }        
     }
-    averagePrice /= order.getInitialAmount() - order.getRemainingAmount();
-    cout << yellow <<"Filled " << order.getInitialAmount() - order.getRemainingAmount()
-         << "/" << order.getInitialAmount() << " units at average price: $" << averagePrice << reset << endl;
+    if(order.getRemainingAmount() != order.getInitialAmount()) {
+        averagePrice /= order.getInitialAmount() - order.getRemainingAmount();
+        cout << yellow <<"Filled " << order.getInitialAmount() - order.getRemainingAmount()
+                 << "/" << order.getInitialAmount() << " units at average price: $" << averagePrice << reset << endl;
+    } else {
+        cout << "No fulfillment, Added to orderbook" << std::endl;
+    }
 }
 
 void OrderBook::listUserOrders(int userId) const {
